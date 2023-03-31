@@ -20,7 +20,7 @@ namespace LotteryWebApi.Models
 
         public LotteryEntry(RegisterRequest req)
         {
-            this.LotteryUid = req.Uid;
+            this.LotteryUid = req.LotteryUid;
             this.SoldTime = req.SoldTime;
             this.RetailerId = req.RetailerId;
             this.Numbers = req.Numbers;

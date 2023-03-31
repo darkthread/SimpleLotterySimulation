@@ -36,7 +36,7 @@ public class WeatherForecastController : ControllerBase
         _regStore.InsertLotteryEntry(entry);
         return new RegisterResponse
         {
-            Uid = req.Uid,
+            LotteryUid = req.LotteryUid,
             RespSign = respSign
         };
     }
