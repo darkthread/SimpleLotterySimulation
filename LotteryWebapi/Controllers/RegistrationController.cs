@@ -6,15 +6,15 @@ namespace LotteryWebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class WeatherForecastController : ControllerBase
+public class RegistrationController : ControllerBase
 {
-    private readonly ILogger<WeatherForecastController> _logger;
+    private readonly ILogger<RegistrationController> _logger;
     private readonly RegDbContext _dbCtx;
     private readonly IRegStore _regStore;
 
     private readonly LotteryValidator _validator;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, RegDbContext dbCtx, LotteryValidator validator)
+    public RegistrationController(ILogger<RegistrationController> logger, RegDbContext dbCtx, LotteryValidator validator)
     {
 
         _validator = validator;
@@ -25,7 +25,7 @@ public class WeatherForecastController : ControllerBase
 
     // accept a LotteryEntry object and put it to database
     [HttpPost]
-    [Route(nameof(Register), Name = nameof(Register))]
+    [Route(nameof(Register))]
     public RegisterResponse Register(RegisterRequest req)
     {
         var respSign = _validator.ValidateAndSign(req);
@@ -42,11 +42,11 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpPost]
-    [Route(nameof(Validate), Name = nameof(Validate))]
+    [Route(nameof(Validate))]
     public bool Validate(Guid lotteryUid, string respSign)
         => _regStore.GetLotterEntry(lotteryUid)?.RespSign == respSign;
     [HttpPost]
-    [Route(nameof(AddRetailer), Name = nameof(AddRetailer))]
+    [Route(nameof(AddRetailer))]
 
     public AddRetailerResponse AddRetailer(string name = "00000000-0000-0000-0000-000000000000")
     {
@@ -58,5 +58,11 @@ public class WeatherForecastController : ControllerBase
             PubKey = crypto.PubKey,
             PrivKey = crypto.PrivKey
         };
+    }
+    [HttpPost]
+    [Route(nameof(GetNow))]
+    public string GetNow()
+    {
+        return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
     }
 }
