@@ -64,10 +64,10 @@ namespace LotteryWebapi.Controllers
                 var kp = JsonSerializer.Deserialize<RsaKeyPair>(
                     System.IO.File.ReadAllText(Path.Combine(retailerDataPath, kpName + ".json")));
                 var csp = new BCRsaCrypto { PrivKey = kp.PrivateKey };
-
+                var retailerPath = Path.Combine(ticketDataPath, kpName);
+                Directory.CreateDirectory(retailerPath);
                 for (var j = 0; j < 100; j++)
                 {
-                    var name = (i * 100 + j).ToString("0000");
                     var req = new RegisterRequest
                     {
                         LotteryUid = Guid.NewGuid().ToString(),
@@ -77,7 +77,7 @@ namespace LotteryWebapi.Controllers
                         MegaNumber = GetRandMegaNo(),
                     };
                     req.ReqSign = Convert.ToBase64String(csp.Sign(Encoding.UTF8.GetBytes(req.DataString)));
-                    System.IO.File.WriteAllText(Path.Combine(ticketDataPath, "T" + name + ".json"),
+                    System.IO.File.WriteAllText(Path.Combine(retailerPath, $"{j:0000}.json"),
                         JsonSerializer.Serialize(req));
                 }
             }

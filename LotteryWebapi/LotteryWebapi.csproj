@@ -17,8 +17,4 @@
 
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="JMeter\" />
-  </ItemGroup>
-
 </Project>
