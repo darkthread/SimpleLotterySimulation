@@ -5,15 +5,18 @@ using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using LotteryWebapi;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace LotteryWebApi.Models
 {
     public class RegDbContext : DbContext, IRegStore
     {
+        private readonly IMemoryCache _memroyCache;
         public DbSet<LotteryEntry> LotteryEntries { get; set; }
         public DbSet<RsaKeyPair> RsaKeyPairs { get; set; }
-        public RegDbContext(DbContextOptions<RegDbContext> options) : base(options)
+        public RegDbContext(DbContextOptions<RegDbContext> options, IMemoryCache memroyCache) : base(options)
         {
+            _memroyCache = memroyCache;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -38,11 +41,24 @@ namespace LotteryWebApi.Models
             }
         }
 
-        public string GetPublicKey(string name) => RsaKeyPairs.SingleOrDefault(o => o.Name == name)?.PublicKey
-                                                   ?? throw new ApplicationException($"Could not find public key for {name}");
-        public string GetPrivateKey(string name) => RsaKeyPairs.SingleOrDefault(o => o.Name == name)?.PrivateKey
-                                                    ?? throw new ApplicationException($"Could not find private key for {name}");
+        RsaKeyPair GetKeyPair(string name)
+        {
+            if (_memroyCache.TryGetValue(name, out var key)) { return key as RsaKeyPair; }
 
+            lock (_memroyCache)
+            {
+                if (_memroyCache.TryGetValue(name, out key)) { return key as RsaKeyPair; }
+                var keyPair = RsaKeyPairs.SingleOrDefault(o => o.Name == name);
+                if (keyPair == null) { throw new ApplicationException($"Could not find key pair for {name}"); }
+                _memroyCache.Set(name, keyPair);
+                return keyPair;
+            }
+        }
+
+        public string GetPublicKey(string name) => GetKeyPair(name)?.PublicKey
+                                                   ?? throw new ApplicationException($"Could not find public key for {name}");
+        public string GetPrivateKey(string name) => GetKeyPair(name)?.PrivateKey 
+                                                   ?? throw new ApplicationException($"Could not find private key for {name}");
         public void InsertLotteryEntry(LotteryEntry entry)
         {
             LotteryEntries.Add(entry);

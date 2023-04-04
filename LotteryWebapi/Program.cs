@@ -11,6 +11,7 @@ Directory.CreateDirectory(dbDir);
 var dbPath = Path.Combine(dbDir, "regdb.sqlite");
 var cs = $"data source={dbPath}";
 
+builder.Services.AddMemoryCache();
 builder.Services.AddDbContext<RegDbContext>(options => options.UseSqlite(cs));
 builder.Services.AddScoped<LotteryValidator>();
 
