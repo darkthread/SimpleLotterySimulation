@@ -476,3 +476,5 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 /LotteryWebapi/Data/*
+/K6TestChart/*.csv
+/K6TestChart/result.json

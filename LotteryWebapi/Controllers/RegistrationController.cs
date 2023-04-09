@@ -1,6 +1,7 @@
 using LotteryWebapi;
 using LotteryWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Ocsp;
 
 namespace LotteryWebApi.Controllers;
 
@@ -26,20 +27,87 @@ public class RegistrationController : ControllerBase
     // accept a LotteryEntry object and put it to database
     [HttpPost]
     [Route(nameof(Register))]
-    public RegisterResponse Register(RegisterRequest req)
+    public IActionResult Register(RegisterRequest req)
     {
-        var respSign = _validator.ValidateAndSign(req);
-        var entry = new LotteryEntry(req)
+        try
         {
-            RespSign = respSign
-        };
-        _regStore.InsertLotteryEntry(entry);
-        return new RegisterResponse
+            var respSign = _validator.ValidateAndSign(req);
+            var entry = new LotteryEntry(req)
+            {
+                RespSign = respSign
+            };
+            _regStore.InsertLotteryEntry(entry);
+            return Ok(new RegisterResponse
+            {
+                LotteryUid = req.LotteryUid,
+                RespSign = respSign
+            });
+        }
+        catch (Exception ex)
         {
-            LotteryUid = req.LotteryUid,
-            RespSign = respSign
-        };
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                message = ex.Message
+            });
+        }
     }
+
+    [HttpPost]
+    [Route(nameof(TestJson))]
+    public IActionResult TestJson(RegisterRequest req)
+    {
+        try
+        {
+            return Ok(new RegisterResponse
+            {
+                LotteryUid = req.LotteryUid,
+                RespSign = "OK"
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                message = ex.ToString()
+            });
+        }
+    }
+
+    [HttpPost]
+    [Route(nameof(TestForm))]
+    [Consumes("application/x-www-form-urlencoded")]
+    public IActionResult TestForm(
+        [FromForm] string lotteryUid,
+        [FromForm] DateTime soldTime,
+        [FromForm] string retailerId, 
+        [FromForm] string numbers, 
+        [FromForm] byte megaNumber,
+        [FromForm] string reqSign
+    )
+    {
+
+        try
+        {
+            var req = new RegisterRequest
+            {
+                LotteryUid = lotteryUid,
+                RetailerId = retailerId,
+                ReqSign= reqSign,
+                Numbers = numbers.Split(',').Select(o => byte.Parse(o)).ToArray(),
+                MegaNumber = megaNumber,
+                SoldTime = soldTime
+            };
+            return Ok($"{req.LotteryUid}\tOK");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                message = ex.ToString()
+            });
+        }
+    }
+
 
     [HttpPost]
     [Route(nameof(Validate))]
